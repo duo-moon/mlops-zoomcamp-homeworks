@@ -1,0 +1,5 @@
+outs:
+- md5: c749ee0f612e91b1dedf70681a689efc
+  size: 1533740
+  hash: md5
+  path: green_tripdata_2023-02.parquet
