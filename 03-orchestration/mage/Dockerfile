@@ -1,0 +1,24 @@
+FROM mageai/mageai:alpha
+
+ARG PROJECT_NAME=homework
+ARG MAGE_CODE_PATH=/home/src
+ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
+
+RUN pip install poetry==1.8.2
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=${MAGE_CODE_PATH}/.cache \
+    POETRY_VENV=${MAGE_CODE_PATH}/.venv
+
+WORKDIR ${MAGE_CODE_PATH}
+
+COPY pyproject.toml poetry.lock ./
+
+RUN touch README.md
+
+RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
+
+ENV PATH="${POETRY_VENV}/bin:$PATH"
+ENV PYTHONPATH="${PYTHONPATH}:${MAGE_CODE_PATH}/${PROJECT_NAME}"

@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+  db:
+    restart: always
+    image: pgvector/pgvector:0.6.0-pg16
+    container_name: mage_db
+    ports:
+      - "${PG_PORT}:${PG_PORT}"
+    environment:
+      POSTGRES_USER: "${PG_USER}"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+      POSTGRES_DB: "${PG_DB}"
+    networks:
+      - backend
+    volumes:
+      - pg-data:/var/lib/postgresql/data/
+      - ~/scripts/database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-p", "${PG_PORT}", "-U", "${PG_USER}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  orchestration:
+    restart: always
+    build:
+      context: ./../..
+      dockerfile: ./03-orchestration/mage/Dockerfile
+    container_name: mage_server
+    image: mage_server
+    ports:
+      - "${MAGE_PORT}:${MAGE_PORT}"
+    environment:
+      PROJECT_NAME: "${PROJECT_NAME}"
+      MAGE_CODE_PATH: "${MAGE_CODE_PATH}"
+      MAGE_PRESENTERS_DIRECTORY: "${MAGE_PRESENTERS_DIRECTORY}"
+      MAGE_DATABASE_CONNECTION_URL: "postgresql+psycopg2://${PG_USER}:${PG_PASSWORD}@db:${PG_PORT}/${PG_DB}"
+    command: /app/run_app.sh mage start ${PROJECT_NAME}
+    networks:
+      - backend
+      - frontend
+      - mlflow-proxi-network
+    volumes:
+      - ../homework/:/${MAGE_CODE_PATH}/${PROJECT_NAME}
+      - ../../data/:/${MAGE_CODE_PATH}/data
+      - ../../output/:${MAGE_CODE_PATH}/output
+    depends_on:
+      - db
+
+volumes:
+  pg-data:
+    external: false
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
+  mlflow-proxi-network:
+    name: mlflow_network
+    external: true

@@ -4,3 +4,4 @@
 models/*
 output/*
 .env
+.DS_Store
