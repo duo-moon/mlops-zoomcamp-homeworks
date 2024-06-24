@@ -1,0 +1,5 @@
+outs:
+- md5: 709488808094e05a8a18f0d683e05be6
+  size: 2390691
+  hash: md5
+  path: 05_monitoring_reference.parquet
