@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  db:
+    restart: always
+    image: postgres
+    container_name: grafana_db
+    ports:
+      - "${PG_PORT}:${PG_PORT}"
+    environment:
+      POSTGRES_PORT: "PG_PORT"
+      POSTGRES_USER: "${PG_USER}"
+      POSTGRES_PASSWORD: "${PG_PASSWORD}"
+      POSTGRES_DB: "${PG_DB}"
+    networks:
+      - backend
+    volumes:
+      - pg-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-p", "5432", "-U", "${PG_USER}" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+    restart: always
+    image: grafana/grafana
+    container_name: grafana
+    user: "0"
+    ports:
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+    volumes:
+      - ./config/grafana_datasources.yml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./config/grafana_dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./dashboards:/opt/grafana/dashboards
+    networks:
+      - backend
+      - frontend
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
+
+volumes:
+  pg-data:
+    external: false
